@@ -52,6 +52,24 @@ def upload_document(
         "chunk_count": doc.chunk_count,
     }
 
+@router.delete("/{document_id}")
+def delete_document(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    doc = db.query(Document).filter(Document.id == document_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    # Remove all chunks belonging to this document from ChromaDB
+    collection.delete(where={"document_id": document_id})
+
+    db.delete(doc)
+    db.commit()
+
+    return {"status": "deleted", "document_id": document_id}
+
 @router.get("")
 def list_documents(regime: str | None = None, db: Session = Depends(get_db)):
     query = db.query(Document)
