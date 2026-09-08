@@ -27,7 +27,21 @@ def query(
         regime=request.regime,
         citations=chunks,
     )
+from app.services.cache import query_cache, make_cache_key
 
+@router.post("", response_model=QueryResponse)
+def query(request: QueryRequest, current_user: User = Depends(get_current_user)):
+    cache_key = make_cache_key(request.question, request.regime, request.top_k)
+    cached = query_cache.get(cache_key)
+    if cached:
+        return cached
+
+    chunks = retrieve_chunks(query=request.question, regime=request.regime, top_k=request.top_k)
+    answer = generate_answer(request.question, chunks)
+
+    result = QueryResponse(answer=answer, regime=request.regime, citations=chunks)
+    query_cache[cache_key] = result
+    return result
 
 from app.models.schemas.query import CompareQueryRequest, CompareQueryResponse, RegimeAnswer
 from app.services.generation import generate_synthesis
