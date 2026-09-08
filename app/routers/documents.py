@@ -11,7 +11,7 @@ from app.models.user import User
 from app.models.document import Document
 from app.services.pdf_extract import extract_text_from_pdf
 from app.services.ingestion import ingest_document
-
+from app.db.chroma_client import collection
 router = APIRouter(prefix="/api/v1/documents", tags=["documents"])
 
 UPLOAD_DIR = Path("uploaded_files")
